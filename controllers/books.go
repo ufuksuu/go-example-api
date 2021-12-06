@@ -1,25 +1,26 @@
 package controllers
 
 import (
-	"bookstore/models"
+	"bookstore/models/entity"
+	"bookstore/models/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 type BooksController struct{}
 
-var bookModel = new(models.BookData)
+var bookService = new(service.BookService)
 
 // GetAllBooks GET /books
 // Get all books in the database
 func (b BooksController) GetAllBooks(c *gin.Context) {
-	books, err := bookModel.GetAll()
+	books, err := bookService.GetAll()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		c.JSON(http.StatusInternalServerError, entity.Response{Message: err.Error()})
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": books})
+	c.JSON(http.StatusOK, entity.Response{Data: books})
 	return
 }
 
@@ -28,16 +29,16 @@ func (b BooksController) GetAllBooks(c *gin.Context) {
 func (b BooksController) GetBook(c *gin.Context) {
 	id := c.Param("id")
 	if id != "" {
-		book, err := bookModel.Get(id)
+		book, err := bookService.Get(id)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			c.JSON(http.StatusInternalServerError, entity.Response{Message: err.Error()})
 			c.Abort()
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"data": book})
+		c.JSON(http.StatusOK, entity.Response{Data: book})
 		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"message": "id not found"})
+	c.JSON(http.StatusBadRequest, entity.Response{Message: "id not found"})
 	c.Abort()
 	return
 }
@@ -45,19 +46,19 @@ func (b BooksController) GetBook(c *gin.Context) {
 // CreateBook POST /books
 // Create new book
 func (b BooksController) CreateBook(c *gin.Context) {
-	var input models.CreateBookInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+	var req service.CreateBookRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, entity.Response{Message: err.Error()})
 		c.Abort()
 		return
 	}
-	book, createError := bookModel.Create(input)
+	book, createError := bookService.Create(req)
 	if createError != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": createError.Error()})
+		c.JSON(http.StatusInternalServerError, entity.Response{Message: createError.Error()})
 		c.Abort()
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": book})
+	c.JSON(http.StatusOK, entity.Response{Data: book})
 	return
 }
 
@@ -66,28 +67,22 @@ func (b BooksController) CreateBook(c *gin.Context) {
 func (b BooksController) UpdateBook(c *gin.Context) {
 	id := c.Param("id")
 	if id != "" {
-		book, err := bookModel.Get(id)
+		var req service.UpdateBookRequest
+		if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
+			c.JSON(http.StatusBadRequest, entity.Response{Message: bindErr.Error()})
+			c.Abort()
+			return
+		}
+		book, err := bookService.Update(id, req)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			c.JSON(http.StatusInternalServerError, entity.Response{Message: err.Error()})
 			c.Abort()
 			return
 		}
-		var input models.UpdateBookInput
-		if bindErr := c.ShouldBindJSON(&input); bindErr != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": bindErr.Error()})
-			c.Abort()
-			return
-		}
-		updateError := bookModel.UpdateBook(&book, input)
-		if updateError != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": updateError.Error()})
-			c.Abort()
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"data": book})
+		c.JSON(http.StatusOK, entity.Response{Data: book})
 		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"message": "id not found"})
+	c.JSON(http.StatusBadRequest, entity.Response{Message: "id not found"})
 	c.Abort()
 	return
 }
@@ -97,21 +92,16 @@ func (b BooksController) UpdateBook(c *gin.Context) {
 func (b BooksController) DeleteBook(c *gin.Context) {
 	id := c.Param("id")
 	if id != "" {
-		book, err := bookModel.Get(id)
+		err := bookService.Delete(id)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+			c.JSON(http.StatusInternalServerError, entity.Response{Message: err.Error()})
 			c.Abort()
 			return
 		}
-		deleteError := bookModel.DeleteBook(&book)
-		if deleteError != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": deleteError.Error()})
-			c.Abort()
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"data": true})
+		c.JSON(http.StatusOK, entity.Response{Data: true})
+		return
 	}
-	c.JSON(http.StatusBadRequest, gin.H{"message": "id not found"})
+	c.JSON(http.StatusBadRequest, entity.Response{Message: "id not found"})
 	c.Abort()
 	return
 }

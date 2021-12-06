@@ -1,6 +1,7 @@
-package models
+package db
 
 import (
+	"bookstore/models/entity"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
@@ -14,6 +15,6 @@ func ConnectDatabase() {
 		panic("Failed to connect to database!")
 	}
 
-	database.AutoMigrate(&Book{})
+	database.AutoMigrate(&entity.Book{})
 	DB = database
 }

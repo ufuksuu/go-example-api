@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bookstore/models"
+	"bookstore/models/db"
 	"bookstore/server"
 )
 
 func main() {
-	models.ConnectDatabase()
+	db.ConnectDatabase()
 	server.Init()
 }
