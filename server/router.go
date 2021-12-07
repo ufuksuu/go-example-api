@@ -8,18 +8,25 @@ import (
 func NewRouter() *gin.Engine {
 	router := gin.New()
 
-	books := new(controllers.BooksController)
-	router.Group("/books")
-	{
-		router.GET("/books", books.GetAllBooks)
-		router.GET("/books/:id", books.GetBook)
-		router.POST("/books", books.CreateBook)
-		router.PATCH("/books/:id", books.UpdateBook)
-		router.DELETE("/books/:id", books.DeleteBook)
-	}
+	bookRouter := router.Group("/books")
+	bookRoutes(bookRouter)
 
-	health := new(controllers.HealthController)
-	router.GET("/health", health.Status)
+	healthRouter := router.Group("/health")
+	healthRoutes(healthRouter)
 
 	return router
+}
+
+func bookRoutes(router *gin.RouterGroup) {
+	books := new(controllers.BooksController)
+	router.GET("", books.GetAllBooks)
+	router.GET("/:id", books.GetBook)
+	router.POST("", books.CreateBook)
+	router.PATCH("/:id", books.UpdateBook)
+	router.DELETE("/:id", books.DeleteBook)
+}
+
+func healthRoutes(router *gin.RouterGroup) {
+	health := new(controllers.HealthController)
+	router.GET("", health.Status)
 }
